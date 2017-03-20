@@ -1,0 +1,16 @@
+# Evohome Controller
+# Copyright (c) 2017 Evsdd 
+# Python 2.7.11
+# Requires pyserial module which can be installed using 'python -m pip install pyserial'
+# A Python script designed to function as a prototype Evohome controller using an RFBee or similar serial device
+# The script can bind with HR92 radiator controllers and send configuration information (setpoint etc)
+# 
+# INSTRICTIONS FOR USE:
+# To begin using the script, first configure the serial device parameters: baudrate and port.
+# Set Zone_num to the number of HR92 devices you wish to control.
+# Finally, enter each of your zone names into the second value in each row of the Zone_INFO array.
+# You are now ready to run the script!
+# Follow the device binding sequence for each HR92 device, beginning with the device you wish to be associated with Zone 1 etc.
+# Once all your devices have been bound you can stop the script and update the first value in each row of Zone_INFO with the DeviceID
+# (TYPE:ADDR) and set Device_count to your number of devices.  This allows the script to be run again without requiring re-binding of 
+# each device.
