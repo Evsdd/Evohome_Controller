@@ -22,6 +22,7 @@
 from __future__ import print_function
 import serial                     # import the modules
 import time
+import datetime
 
 output_log = open("e:\\Python\\Evohome_Controller.log", "w")
 
@@ -55,6 +56,8 @@ Com_NAME = 0x0004                 # Evohome Command ZONE_NAME
 Com_SETP = 0x2309                 # Evohome Command ZONE_SETPOINT
 Com_TEMP = 0x30C9                 # Evohome Command ZONE_TEMP
 Com_UNK = 0x0100                  # Evohome Command ZONE_UNK (unknown)
+Com_DATE = 0x313F                 # Evohome Command DATE_TIME
+
 
 # Create controller values required for message structure
 ControllerTYPE = (ControllerID & 0xFC0000) >> 18;
@@ -74,7 +77,7 @@ for i in xrange(0,Zone_num):
    print('Zone %d:(%s):(%s):(%s:0x%s)' % (i+1,Zone_INFO[i][0],Zone_INFO[i][1],Zone_INFO[i][3],Zone_INFO[i][4]))
 
 print('ControllerID=0x%06X (%s)' % (ControllerID, ControllerTXT))
-##### End of setup 
+##### End of setup
 
 ##### Main message processing loop (infinite)
 while True:
@@ -125,15 +128,10 @@ while True:
            print('Send:(%s)' % send_data)
            No = ComPort.write(send_data)
          else:
-          ##### Received SYNC request, respond with SYNC, ZONE_SETPOINT and ZONE_TEMP
+          ##### Received SYNC request, respond with SYNC
           if ((msg_type == 'RQ') and (cmnd == '%04X' % Com_SYNC)): 
-           send_data = bytearray(b'RP --- %s %s --:------ %04X 003 FF0BB8\r\n' % (ControllerTXT, dev1, Com_SYNC)) # 5min SYNC 0x0BB8 = 3000 (300.0sec)
-           print('Send:(%s)' % send_data)
-           No = ComPort.write(send_data)
-           send_data = bytearray(b'I --- %s --:------ %s %04X 003 %02d%s\r\n' % (ControllerTXT, ControllerTXT, Com_SETP, i, Zone_INFO[i][4])) 
-           print('Send:(%s)' % send_data)
-           No = ComPort.write(send_data)
-           send_data = bytearray(b'I --- %s --:------ %s %04X 003 %02d%s\r\n' % (ControllerTXT, ControllerTXT, Com_TEMP, i, Zone_INFO[i][5])) 
+           SendTXT = '{0:04X}'.format(int((Sync_dur - (time.time() - Sync_time)) * 10))        # Calculate remaining time until next SYNC
+           send_data = bytearray(b'RP --- %s %s --:------ %04X 003 00%s\r\n' % (ControllerTXT, dev1, Com_SYNC, SendTXT)) 
            print('Send:(%s)' % send_data)
            No = ComPort.write(send_data)
           else:
@@ -164,7 +162,16 @@ while True:
               if ((msg_type == 'RQ') and (cmnd == '%04X' % Com_UNK)): 
                send_data = bytearray(b'RP --- %s %s --:------ %04X %s\r\n' % (ControllerTXT, dev1, Com_UNK, data[46:60])) 
                print('Send:(%s)' % send_data)
-               No = ComPort.write(send_data) 
+               No = ComPort.write(send_data)
+              else:
+                  
+               ##### Received DATE request
+               if ((msg_type == 'RQ') and (cmnd == '%04X' % Com_DATE)):
+                today = datetime.datetime.now()
+                SendTXT = '{0:02X}'.format(int((today.hour)))+'{0:02X}'.format(int((today.minute)))+'{0:02X}'.format(int((today.second)))+'{0:02X}'.format(int((today.day)))+'{0:02X}'.format(int((today.month)))+'{0:04X}'.format(int((today.year)))
+                send_data = bytearray(b'RP --- %s %s --:------ %04X 009 00FC%s\r\n' % (ControllerTXT, dev1, Com_DATE, SendTXT)) 
+                print('Send:(%s)' % send_data)
+                No = ComPort.write(send_data) 
 
  else:
   if (Device_count > 0):
